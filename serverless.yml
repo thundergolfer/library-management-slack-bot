@@ -15,7 +15,7 @@ service: library-management-slack-bot
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
-# frameworkVersion: "=X.X.X"
+frameworkVersion: "=1.38.0"
 
 provider:
   name: aws
@@ -50,7 +50,8 @@ package:
   exclude:
     - node_modules/**/*
   include:
-    src/index.ts
+    - index.ts
+    - src/index.ts
 
 functions:
   hello:
