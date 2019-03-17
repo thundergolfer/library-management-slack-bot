@@ -27,7 +27,7 @@
     "build": "npm run build:types && npm run build:js",
     "build:types": "tsc --emitDeclarationOnly",
     "build:js": "babel src --out-dir lib --extensions \".ts,.tsx\" --source-maps inline",
-    "bundle": "webpack"
+    "package": "serverless package --package artifact"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.0",
@@ -41,9 +41,7 @@
     "babel-loader": "^8.0.4",
     "serverless-offline": "^4.9.1",
     "serverless-plugin-typescript": "^1.1.5",
-    "typescript": "^3.2.2",
-    "webpack": "^4.29.6",
-    "webpack-cli": "^3.3.0"
+    "typescript": "^3.2.2"
   },
   "dependencies": {}
 }
