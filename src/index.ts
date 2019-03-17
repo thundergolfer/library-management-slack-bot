@@ -1,19 +1,17 @@
-const https = require('https'),
-    qs = require('querystring'),
-    VERIFICATION_TOKEN = process.env.SLACK_VERIFICATION_TOKEN,
-    ACCESS_TOKEN = process.env.SLACK_ACCESS_TOKEN;
+const https = require('https');
+const qs = require('querystring');
+const VERIFICATION_TOKEN = process.env.SLACK_VERIFICATION_TOKEN;
+const ACCESS_TOKEN = process.env.SLACK_ACCESS_TOKEN;
 
-function makeApiGatewayCompatibleResponse(payload) {
-    return {
-        "statusCode": 200,
-        "headers": {},
-        "body": JSON.stringify(payload),
-        "isBase64Encoded": false
-    };
-}
+const makeApiGatewayCompatibleResponse = (payload: { challenge?: any; message?: string; }) => ({
+    "statusCode": 200,
+    "headers": {},
+    "body": JSON.stringify(payload),
+    "isBase64Encoded": false
+});
 
 // Verify Url - https://api.slack.com/events/url_verification
-function verify(data, callback) {
+const verify = (data: any, callback: any) => {
     if (data.token === VERIFICATION_TOKEN) {
         callback(
             null,
@@ -26,10 +24,10 @@ function verify(data, callback) {
             makeApiGatewayCompatibleResponse({ message: "verification failed"})
         );
     }
-}
+};
 
 // Post message to Slack - https://api.slack.com/methods/chat.postMessage
-function processEvent(event, callback) {
+function processEvent(event: any, callback: any) {
     // test the message for a match and not a bot
     if (!event.bot_id && /(aws|lambda)/ig.test(event.text)) {
         var text = `<@${event.user}> isn't AWS Lambda awesome?`;
@@ -46,7 +44,7 @@ function processEvent(event, callback) {
 }
 
 // Lambda handler
-exports.handler = (event, context, callback) => {
+exports.handler = (event: any, context: any, callback: any) => {
     let body = JSON.parse(event.body)
     switch (body.type) {
         case "url_verification": verify(body, callback); break;
