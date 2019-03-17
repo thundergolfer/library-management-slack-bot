@@ -22,5 +22,14 @@
   "bugs": {
     "url": "https://github.com/thundergolfer/library-management-slack-bot/issues"
   },
-  "homepage": "https://github.com/thundergolfer/library-management-slack-bot#readme"
+  "homepage": "https://github.com/thundergolfer/library-management-slack-bot#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.2.0",
+    "@babel/core": "^7.2.0",
+    "@babel/plugin-proposal-class-properties": "^7.2.1",
+    "@babel/plugin-proposal-object-rest-spread": "^7.2.0",
+    "@babel/preset-env": "^7.2.0",
+    "@babel/preset-typescript": "^7.1.0",
+    "typescript": "^3.2.2"
+  }
 }
