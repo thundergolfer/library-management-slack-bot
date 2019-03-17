@@ -46,7 +46,7 @@ function processEvent(event: any, callback: any) {
 }
 
 // Lambda handler
-const bot: Handler = (event: any, context: Context, callback: Callback) => {
+const handler: Handler = (event: any, context: Context, callback: Callback) => {
     let body = JSON.parse(event.body)
     switch (body.type) {
         case "url_verification": verify(body, callback); break;
@@ -55,4 +55,4 @@ const bot: Handler = (event: any, context: Context, callback: Callback) => {
     }
 };
 
-export { bot };
+export { handler };
