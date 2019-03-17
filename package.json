@@ -1,0 +1,26 @@
+{
+  "name": "library-management-slack-bot",
+  "version": "0.0.1",
+  "description": "An AWS Lambda driven Slack Bot that helps manage a personal/office library",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thundergolfer/library-management-slack-bot.git"
+  },
+  "keywords": [
+    "slack",
+    "lambda",
+    "typescript",
+    "library",
+    "bot"
+  ],
+  "author": "Jonathon Belotti",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/thundergolfer/library-management-slack-bot/issues"
+  },
+  "homepage": "https://github.com/thundergolfer/library-management-slack-bot#readme"
+}
