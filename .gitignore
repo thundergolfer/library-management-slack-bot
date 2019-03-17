@@ -43,3 +43,8 @@ test/*.js
 # Jetbrains
 #################
 .idea/
+
+##########################
+# Serverless Framework
+##########################
+.serverless
