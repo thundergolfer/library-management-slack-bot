@@ -48,3 +48,4 @@ test/*.js
 # Serverless Framework
 ##########################
 .serverless
+artifact/
