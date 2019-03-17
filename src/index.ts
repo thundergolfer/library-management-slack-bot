@@ -1,3 +1,5 @@
+import { Handler, Context, Callback } from 'aws-lambda';
+
 const https = require('https');
 const qs = require('querystring');
 const VERIFICATION_TOKEN = process.env.SLACK_VERIFICATION_TOKEN;
@@ -44,7 +46,7 @@ function processEvent(event: any, callback: any) {
 }
 
 // Lambda handler
-exports.handler = (event: any, context: any, callback: any) => {
+const bot: Handler = (event: any, context: Context, callback: Callback) => {
     let body = JSON.parse(event.body)
     switch (body.type) {
         case "url_verification": verify(body, callback); break;
@@ -52,3 +54,5 @@ exports.handler = (event: any, context: any, callback: any) => {
         default: callback(null);
     }
 };
+
+export { bot };
