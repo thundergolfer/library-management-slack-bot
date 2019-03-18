@@ -49,3 +49,8 @@ test/*.js
 ##########################
 .serverless
 artifact/
+
+##########################
+# Google APIs
+##########################
+client_secret.json
