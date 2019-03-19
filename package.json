@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "An AWS Lambda driven Slack Bot that helps manage a personal/office library",
   "main": "index.js",
+  "types": "index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/thundergolfer/library-management-slack-bot.git"
