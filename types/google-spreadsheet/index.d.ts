@@ -48,6 +48,12 @@ declare module 'google-spreadsheet' {
         readonly rowCount: number;
     }
 
+    export interface SpreadsheetRow {
+        save(callback: (err: Error) => void): void;
+        del(callback: (err: Error) => void): void;
+        id: string
+    }
+
     /**
      * The main class that represents an entire spreadsheet.
      */
@@ -108,7 +114,7 @@ declare module 'google-spreadsheet' {
          * @param new_row Key-value object to add - keys must match the header row on your sheet
          * @param callback Default callback containing array of SpreadsheetRow object
          */
-        public addRow(worksheet_id: number, new_row, callback: (err: Error, row: SpreadsheetRow[]) => void): void;
+        public addRow(worksheet_id: number, new_row: any, callback: (err: Error, row: SpreadsheetRow) => void): void;
 
         /**
          * Get an array of cell objects
@@ -148,7 +154,7 @@ declare module 'google-spreadsheet' {
          * @param sheet
          * @param callback
          */
-        public removeWorksheet(sheet: number | string | SpreadsheetWorksheet, callback): void;
+        public removeWorksheet(sheet: number | string | SpreadsheetWorksheet, callback: any): void;
 
         /**
          * Do a bulk update on cells
@@ -225,7 +231,7 @@ declare module 'google-spreadsheet' {
          * @param values Values to put in the first row of the sheet
          * @param callback Default callback
          */
-        public setHeaderRow(values: string[], callback): void;
+        public setHeaderRow(values: string[], callback: any): void;
 
         /**
          * Clears the entire sheet's contents
@@ -255,6 +261,7 @@ declare module 'google-spreadsheet' {
      * Represents a single row from a sheet
      */
     class SpreadsheetRow {
+        public id: string
         /**
          * Saves any changes made to the row's values
          *
@@ -302,7 +309,7 @@ declare module 'google-spreadsheet' {
          * @param new_value The value to be set
          * @param callback Default callback
          */
-        public setValue(new_value: string | number, callback): void;
+        public setValue(new_value: string | number, callback: any): void;
     }
 
     export default GoogleSpreadsheet;
