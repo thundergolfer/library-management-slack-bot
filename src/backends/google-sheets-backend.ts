@@ -1,30 +1,68 @@
-import { IBackend } from './index'
+import { IBackend } from './index';
 import { Book } from '../book';
 
 // const GoogleSpreadsheet: any = require('google-spreadsheet');
-import GoogleSpreadsheet from 'google-spreadsheet';
+import GoogleSpreadsheet, {GoogleSpreadsheetOptions, SpreadsheetRow} from 'google-spreadsheet';
+import {SpreadElement} from "@babel/types";
 // @ts-ignore
-import creds from '../../client_secret.json';
+// import creds from '../../client_secret.json';
 
-const spreadsheetID = process.env.GOOGLE_SHEETS_ID || "1NYhJgdp4IdpjM-ekrm2xqGavxpc2olnWGB11MCTsxz4"
-
-// Create a document object using the ID of the spreadsheet - obtained from its URL.
-const doc = new GoogleSpreadsheet(spreadsheetID);
+const spreadsheetID = process.env.GOOGLE_SHEETS_ID || "1qzxwmhX7cLuRKUN8BH6FuvF85n6gosfAU2D6K3qh2yA";
+//
+// // Create a document object using the ID of the spreadsheet - obtained from its URL.
+// const doc = new GoogleSpreadsheet(spreadsheetID);
 
 // Authenticate with the Google Spreadsheets API.
-doc.useServiceAccountAuth(creds, function (err: any) {
+// doc.useServiceAccountAuth(creds, function (err: any) {
+//
+//     // Get all of the rows from the spreadsheet.
+//     doc.getRows(1, function (err: any, rows: any) {
+//         console.log(rows);
+//     });
+// });
 
-    // Get all of the rows from the spreadsheet.
-    doc.getRows(1, function (err: any, rows: any) {
-        console.log(rows);
-    });
-});
+interface BookSpreadsheetRow {
+    isbn: number,
+    booktitle: string,
+    numcopies: number
+}
 
 export class GoogleSheetsBackend implements IBackend {
+    private _dbWorksheetIndex = 1;
+
     constructor(private _doc: GoogleSpreadsheet) {}
 
-    addBook(book: Book): boolean {
-        return false;
+    addBook(book: Book): Promise<Book> {
+        return new Promise<Book>((resolve, reject) => {
+            this._doc.addRow(
+                this._dbWorksheetIndex,
+                this.bookToSpreadsheetRow(book),
+                (err: Error, row: SpreadsheetRow) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(this.spreadsheetRowToBook(row));
+                    }
+                }
+            )
+        });
+    }
+
+    listBooks(): Promise<Book[]> {
+        const requestOpts = {};
+        return new Promise<Book[]>((resolve, reject) => {
+            this._doc.getRows(
+                this._dbWorksheetIndex,
+                requestOpts,
+                (err: Error, rows: SpreadsheetRow[]) => {
+                    if (err) {
+                        reject(err)
+                    } else {
+                        resolve(rows.map((b) => this.spreadsheetRowToBook(b)));
+                    }
+                }
+            )
+        });
     }
 
     borrowBook(book: Book, borrower: string): boolean {
@@ -33,6 +71,22 @@ export class GoogleSheetsBackend implements IBackend {
 
     searchByTitle(title: string): Book[] {
         return [];
+    }
+
+    private bookToSpreadsheetRow(b: Book): BookSpreadsheetRow {
+        return {
+            isbn: b.ISBN,
+            booktitle: b.title,
+            numcopies: b.numCopies,
+        }
+    }
+
+    private spreadsheetRowToBook(row: any): Book {
+        return new Book(
+            row.isbn,
+            row.booktitle,
+            row.numcopies
+        )
     }
 
 }
