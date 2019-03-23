@@ -1,5 +1,7 @@
 import { Handler, Context, Callback } from 'aws-lambda';
 
+import { parseMessageText, UserIntent } from "./src/bot";
+
 const https = require('https');
 const qs = require('querystring');
 const VERIFICATION_TOKEN = process.env.SLACK_VERIFICATION_TOKEN;
@@ -27,6 +29,18 @@ const verify = (data: any, callback: Callback) => {
         );
     }
 };
+
+async function handleBotCommand(msgText: string): Promise<string> {
+    // strip the <@USERID> app mention
+    msgText = msgText.replace(/<@.*> /g, "");
+
+    const [err, request] = parseMessageText(msgText);
+    if (err !== null) {
+        return err;
+    }
+
+    return "";
+}
 
 // Post message to Slack - https://api.slack.com/methods/chat.postMessage
 function processEvent(event: any, callback: Callback) {
