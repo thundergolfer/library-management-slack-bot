@@ -1,9 +1,9 @@
 export class Book {
     constructor(
         private _ISBN: number,
-        private _title: string,
-        private _numCopies: number,
-        private _borrowers: string[]
+        private _title?: string,
+        private _numCopies?: number,
+        private _borrowers?: string[]
     ) {}
 
     get ISBN(): number {
@@ -11,14 +11,14 @@ export class Book {
     }
 
     get numCopies(): number {
-        return this._numCopies;
+        return this._numCopies || 1;
     }
 
-    get title(): string {
+    get title(): string | undefined{
         return this._title;
     }
 
     get borrowers(): string[] {
-        return this._borrowers;
+        return this._borrowers || [];
     }
 }
