@@ -1,4 +1,4 @@
-import { IBackend } from './index';
+import {IBackend, IBorrowResult} from './index';
 import { Book } from '../book';
 
 // const GoogleSpreadsheet: any = require('google-spreadsheet');
@@ -24,7 +24,8 @@ const spreadsheetID = process.env.GOOGLE_SHEETS_ID || "1qzxwmhX7cLuRKUN8BH6FuvF8
 interface BookSpreadsheetRow {
     isbn: number,
     booktitle: string,
-    numcopies: number
+    numcopies: number,
+    borrowers: string
 }
 
 export class GoogleSheetsBackend implements IBackend {
@@ -41,7 +42,7 @@ export class GoogleSheetsBackend implements IBackend {
                     if (err) {
                         reject(err);
                     } else {
-                        resolve(this.spreadsheetRowToBook(row));
+                        resolve(this.spreadsheetRowToBook(<BookSpreadsheetRow><unknown>row));
                     }
                 }
             )
@@ -58,15 +59,47 @@ export class GoogleSheetsBackend implements IBackend {
                     if (err) {
                         reject(err)
                     } else {
-                        resolve(rows.map((b) => this.spreadsheetRowToBook(b)));
+                        resolve(rows.map((r) =>
+                            this.spreadsheetRowToBook(<BookSpreadsheetRow><unknown>r))
+                        );
                     }
                 }
             )
         });
     }
 
-    borrowBook(book: Book, borrower: string): boolean {
-        return false;
+    async borrowBook(isbn: number, borrower: string): Promise<IBorrowResult> {
+        const requestOpts = {
+            query: `isbn>${isbn-1} and isbn<${isbn+1}`
+        };
+        return new Promise<IBorrowResult>((resolve, reject) => {
+            this._doc.getRows(
+                this._dbWorksheetIndex,
+                requestOpts,
+                (err: Error, rows: SpreadsheetRow[]) => {
+                    if (err) {
+                        return reject(err);
+                    } else if (rows === undefined || rows.length == 0) {
+                        return resolve({
+                            success: false,
+                            message: "Book not found in database. Trying adding book first."
+                        })
+                    }
+
+                    let row = <BookSpreadsheetRow & SpreadsheetRow><unknown>rows[0];
+                    let borrowers = row.borrowers === "" ? [] : row.borrowers.split(',');
+                    row.borrowers = borrowers.concat([borrower]).join(",");
+
+                    row.save((err) => {
+                        if (err) {
+                            resolve({ success: false, message: err.message });
+                        } else {
+                            resolve({ success: true, message: "Borrowed!" });
+                        }
+                    });
+                }
+            )
+        });
     }
 
     searchByTitle(title: string): Book[] {
@@ -78,14 +111,16 @@ export class GoogleSheetsBackend implements IBackend {
             isbn: b.ISBN,
             booktitle: b.title,
             numcopies: b.numCopies,
+            borrowers: b.borrowers.join(',')
         }
     }
 
-    private spreadsheetRowToBook(row: any): Book {
+    private spreadsheetRowToBook(row: BookSpreadsheetRow): Book {
         return new Book(
             row.isbn,
             row.booktitle,
-            row.numcopies
+            row.numcopies,
+            row.borrowers.split(',')
         )
     }
 
