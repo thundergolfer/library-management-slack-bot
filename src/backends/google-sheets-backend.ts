@@ -1,5 +1,6 @@
 import {IBackend, IBorrowResult, IReturnResult} from './index';
 import { Book } from '../book';
+import { getEditDistance } from "../search";
 
 // const GoogleSpreadsheet: any = require('google-spreadsheet');
 import GoogleSpreadsheet, {GoogleSpreadsheetOptions, SpreadsheetRow} from 'google-spreadsheet';
@@ -143,8 +144,29 @@ export class GoogleSheetsBackend implements IBackend {
         });
     }
 
-    searchByTitle(title: string): Book[] {
-        return [];
+    async searchByTitle(title: string): Promise<Book[]> {
+        const maxEditDistanceToInclude = 3;
+        const allBooks: Book[] = await this.listBooks();
+        let titleEditDistances: Map<number, Book[]> = new Map<number, Book[]>();
+        let matches: Book[] = [];
+        for (let book of allBooks) {
+            let editDistance = getEditDistance(title, book.title);
+            if (editDistance <= maxEditDistanceToInclude) {
+                let curr = titleEditDistances.get(editDistance);
+                if (curr !== undefined) {
+                    curr.push(book);
+                } else {
+                    titleEditDistances.set(editDistance, [book]);
+                }
+            }
+        }
+        for (let i = 0; i <= maxEditDistanceToInclude; i++) {
+            let curr = titleEditDistances.get(i);
+            if (curr !== undefined) {
+                matches = matches.concat(curr);
+            }
+        }
+        return matches;
     }
 
     private bookToSpreadsheetRow(b: Book): BookSpreadsheetRow {

@@ -5,8 +5,7 @@ export interface IBackend {
     borrowBook(isbn: number, borrower: string): Promise<IBorrowResult>
     returnBook(isbn: number, borrower: string): Promise<IReturnResult>
     listBooks(): Promise<Book[]>
-    searchByTitle(title: string): Book[]
-
+    searchByTitle(title: string): Promise<Book[]>
 }
 
 export interface IBorrowResult {
