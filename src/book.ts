@@ -1,12 +1,13 @@
 export class Book {
     constructor(
-        private _ISBN: number,
+        // An ISBN is not a digit only thing, AND can have leading zeros
+        private _ISBN: string,
         private _title?: string,
         private _numCopies?: number,
         private _borrowers?: string[]
     ) {}
 
-    get ISBN(): number {
+    get ISBN(): string {
         return this._ISBN;
     }
 

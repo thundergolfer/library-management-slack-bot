@@ -23,7 +23,7 @@ const spreadsheetID = process.env.GOOGLE_SHEETS_ID || "1qzxwmhX7cLuRKUN8BH6FuvF8
 // });
 
 interface BookSpreadsheetRow {
-    isbn: number,
+    isbn: string,
     booktitle: string,
     numcopies: number,
     borrowers: string
@@ -150,7 +150,7 @@ export class GoogleSheetsBackend implements IBackend {
         let titleEditDistances: Map<number, Book[]> = new Map<number, Book[]>();
         let matches: Book[] = [];
         for (let book of allBooks) {
-            let editDistance = getEditDistance(title, book.title);
+            let editDistance = getEditDistance(title, book.title || "");
             if (editDistance <= maxEditDistanceToInclude) {
                 let curr = titleEditDistances.get(editDistance);
                 if (curr !== undefined) {
@@ -172,7 +172,7 @@ export class GoogleSheetsBackend implements IBackend {
     private bookToSpreadsheetRow(b: Book): BookSpreadsheetRow {
         return {
             isbn: b.ISBN,
-            booktitle: b.title,
+            booktitle: b.title || "",
             numcopies: b.numCopies,
             borrowers: b.borrowers.join(',')
         }
