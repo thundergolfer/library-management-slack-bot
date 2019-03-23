@@ -13,7 +13,7 @@ const makeApiGatewayCompatibleResponse = (payload: { challenge?: any; message?: 
 });
 
 // Verify Url - https://api.slack.com/events/url_verification
-const verify = (data: any, callback: any) => {
+const verify = (data: any, callback: Callback) => {
     if (data.token === VERIFICATION_TOKEN) {
         callback(
             null,
@@ -29,7 +29,7 @@ const verify = (data: any, callback: any) => {
 };
 
 // Post message to Slack - https://api.slack.com/methods/chat.postMessage
-function processEvent(event: any, callback: any) {
+function processEvent(event: any, callback: Callback) {
     // test the message for a match and not a bot
     if (!event.bot_id && /(aws|lambda)/ig.test(event.text)) {
         var text = `<@${event.user}> isn't AWS Lambda awesome?`;
