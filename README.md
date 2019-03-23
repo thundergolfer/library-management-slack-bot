@@ -26,7 +26,7 @@ users can search for available books, record their borrow, and record their retu
 
 ### Testing 
 
-`coming soon`
+`npm run test`
 
 ## Deployment 
 
