@@ -1,4 +1,4 @@
-import {IBackend, IBorrowResult} from './index';
+import {IBackend, IBorrowResult, IReturnResult} from './index';
 import { Book } from '../book';
 
 // const GoogleSpreadsheet: any = require('google-spreadsheet');
@@ -70,7 +70,7 @@ export class GoogleSheetsBackend implements IBackend {
 
     async borrowBook(isbn: number, borrower: string): Promise<IBorrowResult> {
         const requestOpts = {
-            query: `isbn>${isbn-1} and isbn<${isbn+1}`
+            query: `isbn==${isbn}`
         };
         return new Promise<IBorrowResult>((resolve, reject) => {
             this._doc.getRows(
@@ -95,6 +95,47 @@ export class GoogleSheetsBackend implements IBackend {
                             resolve({ success: false, message: err.message });
                         } else {
                             resolve({ success: true, message: "Borrowed!" });
+                        }
+                    });
+                }
+            )
+        });
+    }
+
+    async returnBook(isbn: number, borrower: string): Promise<IReturnResult> {
+        const requestOpts = {
+            query: `isbn==${isbn}`
+        };
+        return new Promise<IBorrowResult>((resolve, reject) => {
+            this._doc.getRows(
+                this._dbWorksheetIndex,
+                requestOpts,
+                (err: Error, rows: SpreadsheetRow[]) => {
+                    if (err) {
+                        return reject(err);
+                    } else if (rows === undefined || rows.length == 0) {
+                        return resolve({
+                            success: false,
+                            message: "Book not found in database. Trying adding book first."
+                        })
+                    }
+
+                    let row = <BookSpreadsheetRow & SpreadsheetRow><unknown>rows[0];
+                    let borrowers = row.borrowers === "" ? [] : row.borrowers.split(',');
+                    const borrowerIndex = borrowers.indexOf(borrower);
+                    if (borrowerIndex < 0) {
+                        resolve({ success: false, message: `'${borrower}' has not borrowed this book.` });
+                        return;
+                    }
+
+                    borrowers.splice(borrowerIndex, 1);
+                    row.borrowers = borrowers.join(",");
+
+                    row.save((err) => {
+                        if (err) {
+                            resolve({ success: false, message: err.message });
+                        } else {
+                            resolve({ success: true, message: "Returned!" });
                         }
                     });
                 }
