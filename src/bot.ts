@@ -1,6 +1,6 @@
 import { Book } from './book';
 
-enum UserIntent {
+export enum UserIntent {
     AddNewBook,
     Borrow,
     Return,
@@ -47,7 +47,7 @@ function parseAdd(tokens: string[]): [Error, UserRequest] {
 
     const isbn: number = parseISBN(tokens[0]);
     if (isbn < 0) {
-        return ["That ISBN is invalid!", { intent: UserIntent.AddNewBook }];
+        return [`ISBN '${tokens[0]}' is invalid!`, { intent: UserIntent.AddNewBook }];
     }
     return [null, { intent: UserIntent.AddNewBook, book: new Book(isbn) }];
 }
@@ -60,7 +60,7 @@ function parseBorrow(tokens: string[]): [Error, UserRequest] {
 
     const isbn: number = parseISBN(tokens[0]);
     if (isbn < 0) {
-        return ["That ISBN is invalid!", { intent: UserIntent.Borrow }];
+        return [`ISBN '${tokens[0]}' is invalid!`, { intent: UserIntent.Borrow }];
     }
     return [null, { intent: UserIntent.Borrow, book: new Book(isbn) }];
 }
@@ -73,7 +73,7 @@ function parseReturn(tokens: string[]): [Error, UserRequest] {
 
     const isbn: number = parseISBN(tokens[0]);
     if (isbn < 0) {
-        return ["That ISBN is invalid!", { intent: UserIntent.Return }];
+        return [`ISBN '${tokens[0]}' is invalid!`, { intent: UserIntent.Return }];
     }
     return [null, { intent: UserIntent.Return, book: new Book(isbn) }];
 }
@@ -87,7 +87,7 @@ function parseReturn(tokens: string[]): [Error, UserRequest] {
  */
 function parseISBN(s: string): number {
     const cleaned = s.replace(/-/g, "")
-    if (cleaned.length === 10 || cleaned.length === 13) {
+    if (cleaned.length !== 10 && cleaned.length !== 13) {
         return -1;
     }
     const isbn = Number(cleaned);
