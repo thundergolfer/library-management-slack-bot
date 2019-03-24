@@ -19,18 +19,21 @@ export class GoogleSheetsBackend implements IBackend {
 
     constructor(private _doc: GoogleSpreadsheet) {}
 
-    static create(): GoogleSheetsBackend {
-
+    static create(): Promise<GoogleSheetsBackend> {
         // Create a document object using the ID of the spreadsheet - obtained from its URL.
         const doc = new GoogleSpreadsheet(SPREADSHEET_ID);
 
-        // Authenticate with the Google Spreadsheets API.
-        doc.useServiceAccountAuth(CREDS, function (err: Error) {
-            if (err !== null) {
-                throw err;
-            }
+        return new Promise<GoogleSheetsBackend>((resolve, reject) => {
+            // Authenticate with the Google Spreadsheets API.
+            doc.useServiceAccountAuth(CREDS, function (err: Error) {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                }
+                const gsBackend = new GoogleSheetsBackend(doc);
+                resolve(gsBackend);
+            });
         });
-        return new GoogleSheetsBackend(doc);
     }
 
     addBook(book: Book): Promise<Book> {

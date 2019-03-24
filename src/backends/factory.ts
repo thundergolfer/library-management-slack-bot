@@ -1,7 +1,7 @@
 import {IBackend} from "./index";
 import { GoogleSheetsBackend } from "./google-sheets-backend";
 
-export function createBackend(type: string): IBackend {
+export function createBackend(type: string): Promise<IBackend> {
     switch (type) {
         case 'google-sheets': {
             return GoogleSheetsBackend.create();

@@ -56,8 +56,8 @@ async function handleBotCommand(msgText: string, userID: string): Promise<string
         return err;
     }
 
-    const backend: IBackend = createBackend("google-sheets");
     try {
+        const backend: IBackend = await createBackend("google-sheets");
         switch (request.intent) {
             case UserIntent.Borrow: {
                 console.log("handling a borrow.");
