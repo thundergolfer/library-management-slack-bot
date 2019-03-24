@@ -10,8 +10,13 @@ This bot exists to manage an index of physical books in a home or office library
 also track borrows and returns of the library users. Via simple Slack interactions, 
 users can search for available books, record their borrow, and record their return. 
 
-**TODO:** *Specific commands coming soon*
+### Commands 
 
+> *Note:* This is currently an MVP. In future, the bot will require the user manually inputting an ISBN.
+
+##### **[@librarybot]() `borrow <ISBN>`** - Borrow a book with the ISBN of value `<ISBN>`
+##### **[@librarybot]() `add <ISBN>`** - Return an book with the ISBN of value `<ISBN>`
+##### **[@librarybot]() `return <ISBN>`** - Register to the library database a new book with the ISBN of value `<ISBN>` 
 
 ## Development
 
