@@ -2,25 +2,10 @@ import {IBackend, IBorrowResult, IReturnResult} from './index';
 import { Book } from '../book';
 import { getEditDistance } from "../search";
 
-// const GoogleSpreadsheet: any = require('google-spreadsheet');
-import GoogleSpreadsheet, {GoogleSpreadsheetOptions, SpreadsheetRow} from 'google-spreadsheet';
-import {SpreadElement} from "@babel/types";
-// @ts-ignore
-// import creds from '../../client_secret.json';
+import GoogleSpreadsheet, {SpreadsheetRow} from 'google-spreadsheet';
+import CREDS from '../../client_secret.json';
 
-const spreadsheetID = process.env.GOOGLE_SHEETS_ID || "1qzxwmhX7cLuRKUN8BH6FuvF85n6gosfAU2D6K3qh2yA";
-//
-// // Create a document object using the ID of the spreadsheet - obtained from its URL.
-// const doc = new GoogleSpreadsheet(spreadsheetID);
-
-// Authenticate with the Google Spreadsheets API.
-// doc.useServiceAccountAuth(creds, function (err: any) {
-//
-//     // Get all of the rows from the spreadsheet.
-//     doc.getRows(1, function (err: any, rows: any) {
-//         console.log(rows);
-//     });
-// });
+const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_ID || "1qzxwmhX7cLuRKUN8BH6FuvF85n6gosfAU2D6K3qh2yA";
 
 interface BookSpreadsheetRow {
     isbn: string,
@@ -33,6 +18,20 @@ export class GoogleSheetsBackend implements IBackend {
     private _dbWorksheetIndex = 1;
 
     constructor(private _doc: GoogleSpreadsheet) {}
+
+    static create(): GoogleSheetsBackend {
+
+        // Create a document object using the ID of the spreadsheet - obtained from its URL.
+        const doc = new GoogleSpreadsheet(SPREADSHEET_ID);
+
+        // Authenticate with the Google Spreadsheets API.
+        doc.useServiceAccountAuth(CREDS, function (err: Error) {
+            if (err !== null) {
+                throw err;
+            }
+        });
+        return new GoogleSheetsBackend(doc);
+    }
 
     addBook(book: Book): Promise<Book> {
         return new Promise<Book>((resolve, reject) => {
@@ -69,7 +68,7 @@ export class GoogleSheetsBackend implements IBackend {
         });
     }
 
-    async borrowBook(isbn: number, borrower: string): Promise<IBorrowResult> {
+    async borrowBook(isbn: string, borrower: string): Promise<IBorrowResult> {
         const requestOpts = {
             query: `isbn==${isbn}`
         };
@@ -103,7 +102,7 @@ export class GoogleSheetsBackend implements IBackend {
         });
     }
 
-    async returnBook(isbn: number, borrower: string): Promise<IReturnResult> {
+    async returnBook(isbn: string, borrower: string): Promise<IReturnResult> {
         const requestOpts = {
             query: `isbn==${isbn}`
         };
