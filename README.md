@@ -14,9 +14,9 @@ users can search for available books, record their borrow, and record their retu
 
 > *Note:* This is currently an MVP. In future, the bot will *not* require the user manually inputting an ISBN.
 
-##### **[@librarybot]() `borrow <ISBN>`** - Borrow a book with the ISBN of value `<ISBN>`
-##### **[@librarybot]() `add <ISBN>`** - Return an book with the ISBN of value `<ISBN>`
-##### **[@librarybot]() `return <ISBN>`** - Register to the library database a new book with the ISBN of value `<ISBN>` 
+##### **[@librarybot](/README.md) `borrow <ISBN>`** - Borrow a book with the ISBN of value `<ISBN>`
+##### **[@librarybot](/README.md) `add <ISBN>`** - Return an book with the ISBN of value `<ISBN>`
+##### **[@librarybot](/README.md) `return <ISBN>`** - Register to the library database a new book with the ISBN of value `<ISBN>` 
 
 ## Development
 
