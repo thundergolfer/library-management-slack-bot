@@ -64,6 +64,11 @@ async function handleBotCommand(msgText: string, userID: string): Promise<string
                 const result = await backend.borrowBook(request.book!.ISBN, userID);
                 return result.message;
             }
+            case UserIntent.Return: {
+                console.log("handling a return.");
+                const result = await backend.returnBook(request.book!.ISBN, userID);
+                return result.message;
+            }
             default:
                 return "Could not parse your request, sorry.";
         }
