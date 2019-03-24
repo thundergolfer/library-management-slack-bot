@@ -12,6 +12,7 @@ export interface UserRequest {
     intent: UserIntent
     searchString?: string
     book?: Book
+    userId?: string
 }
 
 type Error = string | null;
@@ -22,14 +23,14 @@ const HELP_MSG = `Usage:
     return <ISBN>
 `;
 
-export function parseMessageText(text: string): [Error, UserRequest] {
+export function parseMessage(text: string, user: string): [Error, UserRequest] {
     const tokens = text.split(" ");
     const command = tokens[0];
 
     switch (command) {
         case "add": return parseAdd(tokens.slice(1,));
-        case "borrow": return parseBorrow(tokens.slice(1,));
-        case "return": return parseReturn(tokens.slice(1,));
+        case "borrow": return parseBorrow(user, tokens.slice(1,));
+        case "return": return parseReturn(user, tokens.slice(1,));
         default: return [HELP_MSG, { intent: UserIntent.Unknown }]
     }
 
@@ -42,7 +43,7 @@ export function parseMessageText(text: string): [Error, UserRequest] {
 function parseAdd(tokens: string[]): [Error, UserRequest] {
     const usageMsg = "Usage: add <ISBN>";
     if (tokens.length != 1) {
-        return [usageMsg, { intent: UserIntent.AddNewBook }];
+        return [usageMsg, { intent: UserIntent.Unknown }];
     }
 
     const isbn = parseISBN(tokens[0]);
@@ -52,7 +53,7 @@ function parseAdd(tokens: string[]): [Error, UserRequest] {
     return [null, { intent: UserIntent.AddNewBook, book: new Book(isbn) }];
 }
 
-function parseBorrow(tokens: string[]): [Error, UserRequest] {
+function parseBorrow(user: string, tokens: string[]): [Error, UserRequest] {
     const usageMsg = "Usage: borrow <ISBN>";
     if (tokens.length != 1) {
         return [usageMsg, { intent: UserIntent.Borrow }];
@@ -62,10 +63,10 @@ function parseBorrow(tokens: string[]): [Error, UserRequest] {
     if (isbn === null) {
         return [`ISBN '${tokens[0]}' is invalid!`, { intent: UserIntent.Borrow }];
     }
-    return [null, { intent: UserIntent.Borrow, book: new Book(isbn) }];
+    return [null, { intent: UserIntent.Borrow, book: new Book(isbn), userId: user }];
 }
 
-function parseReturn(tokens: string[]): [Error, UserRequest] {
+function parseReturn(user: string, tokens: string[]): [Error, UserRequest] {
     const usageMsg = "Usage: borrow <ISBN>";
     if (tokens.length != 1) {
         return [usageMsg, { intent: UserIntent.Return }];
@@ -75,7 +76,7 @@ function parseReturn(tokens: string[]): [Error, UserRequest] {
     if (isbn === null) {
         return [`ISBN '${tokens[0]}' is invalid!`, { intent: UserIntent.Return }];
     }
-    return [null, { intent: UserIntent.Return, book: new Book(isbn) }];
+    return [null, { intent: UserIntent.Return, book: new Book(isbn), userId: user }];
 }
 
 /**
