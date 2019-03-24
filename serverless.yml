@@ -51,7 +51,8 @@ package:
     - node_modules/**/*
   include:
     - index.ts
-    - src/index.ts
+    - src/**/*.ts
+    - types/**/*.ts
 
 functions:
   hello:
