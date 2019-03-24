@@ -1,6 +1,6 @@
 import {Callback, Context, Handler} from 'aws-lambda';
 
-import {parseMessage, UserIntent} from "./src/bot";
+import {parseMessage, UserIntent, presentBookList} from "./src/bot";
 import {IBackend} from "./src/backends";
 import {createBackend} from "./src/backends/factory";
 
@@ -68,6 +68,11 @@ async function handleBotCommand(msgText: string, userID: string): Promise<string
                 console.log("handling a return.");
                 const result = await backend.returnBook(request.book!.ISBN, userID);
                 return result.message;
+            }
+            case UserIntent.ListBooks: {
+                console.log("handling a request to list all books in DB");
+                const books = await backend.listBooks();
+                return presentBookList(books);
             }
             default:
                 return "Could not parse your request, sorry.";

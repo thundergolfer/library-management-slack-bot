@@ -5,6 +5,7 @@ export enum UserIntent {
     Borrow,
     Return,
     Search,
+    ListBooks,
     Unknown
 }
 
@@ -31,6 +32,7 @@ export function parseMessage(text: string, user: string): [Error, UserRequest] {
         case "add": return parseAdd(tokens.slice(1,));
         case "borrow": return parseBorrow(user, tokens.slice(1,));
         case "return": return parseReturn(user, tokens.slice(1,));
+        case "list": return [null, { intent: UserIntent.ListBooks }];
         default: return [HELP_MSG, { intent: UserIntent.Unknown }]
     }
 
@@ -92,4 +94,20 @@ function parseISBN(s: string): string | null {
         return null;
     }
     return cleaned;
+}
+
+function presentBook(book: Book): string {
+    return `_${book.title}_ - \`${book.ISBN}\``;
+}
+
+export function presentBookList(books: Book[]): string {
+    if (books.length == 0) {
+        return "";
+    } else if (books.length == 1) {
+        return presentBook(books[0]);
+    }
+
+    const presentedBooks: string[] = books.map((book: Book) => presentBook(book));
+    const listedBooks: string[] = presentedBooks.map((pb: string) => `• ${pb}`);
+    return listedBooks.join('\n');
 }

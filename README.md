@@ -17,7 +17,8 @@ users can search for available books, record their borrow, and record their retu
 ##### **[@librarybot](/README.md) `borrow <ISBN>`** - Borrow a book with the ISBN of value `<ISBN>`
 ##### **[@librarybot](/README.md) `add <ISBN>`** - Return an book with the ISBN of value `<ISBN>`
 ##### **[@librarybot](/README.md) `return <ISBN>`** - Register to the library database a new book with the ISBN of value `<ISBN>`
-##### **[@librarybot](/README.md) `search "<Title>"`** - 🚧 *COMING SOON* 🚧
+##### **[@librarybot](/README.md) `list`** - List all books registered in the library database
+##### **[@librarybot](/README.md) `search "<Title>"`** - 🚧 *COMING SOON. In the meantime use the 'list' command* 🚧
 
 ## Development
 
