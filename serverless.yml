@@ -53,6 +53,7 @@ package:
     - index.ts
     - src/**/*.ts
     - types/**/*.ts
+    - client_secret.json
 
 functions:
   hello:
