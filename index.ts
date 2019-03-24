@@ -32,6 +32,21 @@ const verify = (data: any, callback: Callback) => {
     }
 };
 
+function postToSlack(channel: string, text: string) {
+    if (process.env.IS_LOCAL) {
+        console.log({ channel, text });
+        return;
+    }
+
+    const message = {
+        token: ACCESS_TOKEN,
+        channel: channel,
+        text: text
+    };
+    const query = qs.stringify(message);
+    https.get(`https://slack.com/api/chat.postMessage?${query}`);
+}
+
 async function handleBotCommand(msgText: string, userID: string): Promise<string> {
     // strip the <@USERID> app mention
     msgText = msgText.replace(/<@.*> /g, "");
@@ -45,6 +60,7 @@ async function handleBotCommand(msgText: string, userID: string): Promise<string
     try {
         switch (request.intent) {
             case UserIntent.Borrow: {
+                console.log("handling a borrow.");
                 const result = await backend.borrowBook(request.book!.ISBN, userID);
                 return result.message;
             }
@@ -59,14 +75,8 @@ async function handleBotCommand(msgText: string, userID: string): Promise<string
 // Post message to Slack - https://api.slack.com/methods/chat.postMessage
 async function processEvent(event: any, callback: Callback) {
     const text = await handleBotCommand(event.text, event.user);
-    const message = {
-        token: ACCESS_TOKEN,
-        channel: event.channel,
-        text: text
-    };
+    postToSlack(event.channel, text);
 
-    const query = qs.stringify(message);
-    https.get(`https://slack.com/api/chat.postMessage?${query}`);
     callback(
         null,
         makeApiGatewayCompatibleResponse({ message: "Success" }),
@@ -76,7 +86,6 @@ async function processEvent(event: any, callback: Callback) {
 // Lambda handler
 const handler: Handler = (event: any, context: Context, callback: Callback) => {
     let body = JSON.parse(event.body)
-    console.log(body.type);
     switch (body.type) {
         case "url_verification": verify(body, callback); break;
         case "event_callback": processEvent(body.event, callback); break;
