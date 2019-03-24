@@ -5,7 +5,8 @@ import { getEditDistance } from "../search";
 import GoogleSpreadsheet, {SpreadsheetRow} from 'google-spreadsheet';
 import CREDS from '../../client_secret.json';
 
-const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_ID || "1qzxwmhX7cLuRKUN8BH6FuvF85n6gosfAU2D6K3qh2yA";
+const DEFAULT_SPREADSHEET_ID = process.env.IS_LOCAL ? "1Vbvys2uiSyJWPKsFWjMyHeZ-1mTWDTZCyeFfYCkemuQ" : "1qzxwmhX7cLuRKUN8BH6FuvF85n6gosfAU2D6K3qh2yA";
+const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_ID || DEFAULT_SPREADSHEET_ID;
 
 interface BookSpreadsheetRow {
     isbn: string,
