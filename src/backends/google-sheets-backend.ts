@@ -39,6 +39,7 @@ export class GoogleSheetsBackend implements IBackend {
 
     addBook(book: Book): Promise<Book> {
         return new Promise<Book>((resolve, reject) => {
+            // TODO(Jonathon): Validate that the book has not already been added
             this._doc.addRow(
                 this._dbWorksheetIndex,
                 this.bookToSpreadsheetRow(book),
@@ -90,6 +91,7 @@ export class GoogleSheetsBackend implements IBackend {
                         })
                     }
 
+                    // TODO(Jonathon): Validate that the user has not already borrowed this book
                     let row = <BookSpreadsheetRow & SpreadsheetRow><unknown>rows[0];
                     let borrowers = row.borrowers === "" ? [] : row.borrowers.split(',');
                     row.borrowers = borrowers.concat([borrower]).join(",");
