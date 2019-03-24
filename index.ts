@@ -1,6 +1,8 @@
-import { Handler, Context, Callback } from 'aws-lambda';
+import {Callback, Context, Handler} from 'aws-lambda';
 
-import { parseMessageText, UserIntent } from "./src/bot";
+import {parseMessage, UserIntent} from "./src/bot";
+import {IBackend} from "./src/backends";
+import {createBackend} from "./src/backends/factory";
 
 const https = require('https');
 const qs = require('querystring');
@@ -30,33 +32,45 @@ const verify = (data: any, callback: Callback) => {
     }
 };
 
-async function handleBotCommand(msgText: string): Promise<string> {
+async function handleBotCommand(msgText: string, userID: string): Promise<string> {
     // strip the <@USERID> app mention
     msgText = msgText.replace(/<@.*> /g, "");
 
-    const [err, request] = parseMessageText(msgText);
+    const [err, request] = parseMessage(msgText, userID);
     if (err !== null) {
         return err;
     }
 
-    return "";
+    const backend: IBackend = createBackend("google-sheets");
+    try {
+        switch (request.intent) {
+            case UserIntent.Borrow: {
+                const result = await backend.borrowBook(request.book!.ISBN, userID);
+                return result.message;
+            }
+            default:
+                return "Could not parse your request, sorry.";
+        }
+    } catch(err) {
+        return err;
+    }
 }
 
 // Post message to Slack - https://api.slack.com/methods/chat.postMessage
-function processEvent(event: any, callback: Callback) {
-    // test the message for a match and not a bot
-    if (!event.bot_id && /(aws|lambda)/ig.test(event.text)) {
-        var text = `<@${event.user}> isn't AWS Lambda awesome?`;
-        var message = {
-            token: ACCESS_TOKEN,
-            channel: event.channel,
-            text: text
-        };
+async function processEvent(event: any, callback: Callback) {
+    const text = await handleBotCommand(event.text, event.user);
+    const message = {
+        token: ACCESS_TOKEN,
+        channel: event.channel,
+        text: text
+    };
 
-        var query = qs.stringify(message); // prepare the querystring
-        https.get(`https://slack.com/api/chat.postMessage?${query}`);
-    }
-    callback(null);
+    const query = qs.stringify(message);
+    https.get(`https://slack.com/api/chat.postMessage?${query}`);
+    callback(
+        null,
+        makeApiGatewayCompatibleResponse({ message: "Success" }),
+    );
 }
 
 // Lambda handler
