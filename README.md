@@ -23,6 +23,7 @@ users can search for available books, record their borrow, and record their retu
 
 ### Prerequisites 
 
+- **Access to API Gateway and Lambda on the AWS Account where this bot is deployed** 
 - **Serverless Framework** ([`npm install -g serverless@1.38.0`](https://serverless.com/framework/docs/getting-started/))
 - **Typescript** ([`npm install -g typescript`](https://www.typescriptlang.org/#download-links))
 - **Jsonnet** ([`brew install jsonnet`](https://formulae.brew.sh/formula/jsonnet))
