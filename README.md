@@ -12,7 +12,7 @@ users can search for available books, record their borrow, and record their retu
 
 ### Commands 
 
-> *Note:* This is currently an MVP. In future, the bot will require the user manually inputting an ISBN.
+> *Note:* This is currently an MVP. In future, the bot will *not* require the user manually inputting an ISBN.
 
 ##### **[@librarybot]() `borrow <ISBN>`** - Borrow a book with the ISBN of value `<ISBN>`
 ##### **[@librarybot]() `add <ISBN>`** - Return an book with the ISBN of value `<ISBN>`
