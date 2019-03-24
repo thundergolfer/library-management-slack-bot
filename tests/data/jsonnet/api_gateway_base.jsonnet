@@ -1,5 +1,6 @@
 local invalid_message = import 'invalid_message.libsonnet';
 local borrow_message = import 'borrow_message.libsonnet';
+local return_message = import 'return_message.libsonnet';
 
 local FullApiGatewayedEventAPIMessage(eventApiMessage) = {
   "resource": "/",
@@ -63,4 +64,5 @@ local FullApiGatewayedEventAPIMessage(eventApiMessage) = {
 {
   "invalid_message.json": FullApiGatewayedEventAPIMessage(invalid_message),
   "borrow_message.json": FullApiGatewayedEventAPIMessage(borrow_message),
+  "return_message.json": FullApiGatewayedEventAPIMessage(return_message),
 }
