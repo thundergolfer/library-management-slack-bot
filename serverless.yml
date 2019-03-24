@@ -55,7 +55,7 @@ package:
 
 functions:
   hello:
-    handler: index.bot
+    handler: index.handler
 
 plugins:
   - serverless-plugin-typescript

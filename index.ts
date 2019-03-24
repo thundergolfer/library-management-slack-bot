@@ -62,6 +62,7 @@ function processEvent(event: any, callback: Callback) {
 // Lambda handler
 const handler: Handler = (event: any, context: Context, callback: Callback) => {
     let body = JSON.parse(event.body)
+    console.log(body.type);
     switch (body.type) {
         case "url_verification": verify(body, callback); break;
         case "event_callback": processEvent(body.event, callback); break;
