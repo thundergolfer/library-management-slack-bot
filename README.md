@@ -1,12 +1,12 @@
 # Library Management Slack Bot
 
-Slack bot that helps facilitate tracking of books and borrowers in your office/home library
+Slack bot that helps facilitate tracking of books and borrowers in your office/home library. This bot was built to support the office library @ [Canva Sydney](https://www.canva.com/careers/), but is general in nature and with simple hosting on [AWS Lambda](https://aws.amazon.com/lambda/) and [Google Sheets](https://www.twilio.com/blog/2017/03/google-spreadsheets-and-javascriptnode-js.html) can solve the same problems in your office. 
 
 -----
 
 ## How It Works
 
-This bot exists to manage an index of physical books in a home or office library, and 
+This bot exists to manage an index of physical books in an office library, and 
 also track borrows and returns of the library users. Via simple Slack interactions, 
 users can search for available books, record their borrow, and record their return. 
 
