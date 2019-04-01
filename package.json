@@ -22,13 +22,13 @@
   },
   "homepage": "https://github.com/thundergolfer/library-management-slack-bot#readme",
   "scripts": {
-    "test": "jest",
-    "type-check": "tsc --noEmit",
+    "test": "npx jest",
+    "type-check": "npx tsc --noEmit",
     "type-check:watch": "npm run type-check -- --watch",
-    "build": "npm run build:types && npm run build:js",
-    "build:types": "tsc --emitDeclarationOnly",
-    "build:js": "babel src --out-dir lib --extensions \".ts,.tsx\" --source-maps inline",
-    "package": "serverless package --package artifact"
+    "build": "npx build:types && npm run build:js",
+    "build:types": "npx tsc --emitDeclarationOnly",
+    "build:js": "npx babel src --out-dir lib --extensions \".ts,.tsx\" --source-maps inline",
+    "package": "npx serverless package --package artifact"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.0",
@@ -42,7 +42,9 @@
     "@types/node": "^11.11.3",
     "babel-loader": "^8.0.4",
     "jest": "^24.5.0",
+    "serverless": "=1.38.0",
     "serverless-offline": "^4.9.1",
+    "serverless-plugin-include-dependencies": "^3.2.1",
     "serverless-plugin-typescript": "^1.1.5",
     "ts-jest": "^24.0.0",
     "typescript": "^3.2.2"

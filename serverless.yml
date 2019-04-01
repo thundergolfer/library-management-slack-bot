@@ -46,15 +46,6 @@ provider:
 #    variable1: value1
 
 # you can add packaging information here
-package:
-  exclude:
-    - node_modules/**/*
-  include:
-    - index.ts
-    - src/**/*.ts
-    - types/**/*.ts
-    - client_secret.json
-
 functions:
   hello:
     handler: index.handler
@@ -62,6 +53,7 @@ functions:
 plugins:
   - serverless-plugin-typescript
   - serverless-offline
+  - serverless-plugin-include-dependencies
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
