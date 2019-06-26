@@ -3,8 +3,8 @@ import {Callback, Context, Handler} from 'aws-lambda';
 import {parseMessage, UserIntent, presentBookList} from "./src/bot";
 import {IBackend} from "./src/backends";
 import {createBackend} from "./src/backends/factory";
+import * as request from "request";
 
-const https = require('https');
 const qs = require('querystring');
 const VERIFICATION_TOKEN = process.env.SLACK_VERIFICATION_TOKEN;
 const ACCESS_TOKEN = process.env.SLACK_ACCESS_TOKEN;
@@ -44,7 +44,14 @@ function postToSlack(channel: string, text: string) {
         text: text
     };
     const query = qs.stringify(message);
-    https.get(`https://slack.com/api/chat.postMessage?${query}`);
+
+    request.get(`https://slack.com/api/chat.postMessage?${query}`, (err, res, _body) => {
+        const body = _body && JSON.parse(_body);
+        if (err || res.statusCode < 200 || res.statusCode >= 300 || !body || body.ok === false) {
+            err && console.error(err);
+            body && console.error(body);
+        }
+    });
 }
 
 async function handleBotCommand(msgText: string, userID: string): Promise<string> {
