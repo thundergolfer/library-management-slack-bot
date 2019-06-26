@@ -58,6 +58,25 @@ It won't actually send a message to Slack. It will just `console.log` what would
 From repository root, run `jsonnet -m test/data test/data/jsonnet/api_gateway_base.jsonnet`. Valid AWS API Gateway payloads
 *containing* Slack Event API payloads as strings (`event.body`) will be generated in `test/data`.
 
+## Running Locally
+
+To start the server locally run:
+
+`npx serverless offline`
+
+To create an external URL accessible from slack run:
+
+```
+npm install -f localtunnel
+lt --port 3000 --subdomain <domain name>
+```
+
+1) [Create a Slack app](https://api.slack.com/apps)
+2) Enable event subscriptions, with the URL from localtunnel
+3) Create a bot user
+4) Install the app with the `chat:write:user` scope
+5) In the slack workspace you installed to, message the bot with `@<botname> list`
+
 ## Deployment 
 
 Currently deployment involves manually uploading the `.zip` artifact for the 
