@@ -9,14 +9,14 @@ export enum UserIntent {
     Unknown
 }
 
-export interface UserRequest {
-    intent: UserIntent
-    searchString?: string
-    book?: Book
-    userId?: string
-}
-
-type Error = string | null;
+export type UserRequest =
+    { intent: UserIntent.AddNewBook, book: Book, valid: true }
+    | { intent: UserIntent.Borrow, book: Book, userId: string, valid: true }
+    | { intent: UserIntent.Return, book: Book, valid: true }
+    | { intent: UserIntent.Search, searchString: string, valid: true }
+    | { intent: UserIntent.ListBooks, valid: true }
+    | { intent: UserIntent.Unknown, valid: true }
+    | { valid: false, errorMsg: string, intent: UserIntent }
 
 const HELP_MSG = `Usage:
     add <ISBN>
@@ -24,7 +24,7 @@ const HELP_MSG = `Usage:
     return <ISBN>
 `;
 
-export function parseMessage(text: string, user: string): [Error, UserRequest] {
+export function parseMessage(text: string, user: string): UserRequest {
     const tokens = text.split(" ");
     const command = tokens[0];
 
@@ -32,53 +32,51 @@ export function parseMessage(text: string, user: string): [Error, UserRequest] {
         case "add": return parseAdd(tokens.slice(1,));
         case "borrow": return parseBorrow(user, tokens.slice(1,));
         case "return": return parseReturn(user, tokens.slice(1,));
-        case "list": return [null, { intent: UserIntent.ListBooks }];
-        default: return [HELP_MSG, { intent: UserIntent.Unknown }]
+        case "list": return { intent: UserIntent.ListBooks, valid: true };
+        default: return { valid: false, errorMsg: HELP_MSG, intent: UserIntent.Unknown }
     }
-
-    return [
-        null,
-        { intent: UserIntent.AddNewBook }
-    ];
 }
 
-function parseAdd(tokens: string[]): [Error, UserRequest] {
+function parseAdd(tokens: string[]): UserRequest {
+    const intent = UserIntent.AddNewBook;
     const usageMsg = "Usage: add <ISBN>";
     if (tokens.length != 1) {
-        return [usageMsg, { intent: UserIntent.Unknown }];
+        return { valid: false, errorMsg: usageMsg, intent }
     }
 
     const isbn = parseISBN(tokens[0]);
     if (isbn === null) {
-        return [`ISBN '${tokens[0]}' is invalid!`, { intent: UserIntent.AddNewBook }];
+        return { valid: false, errorMsg: `ISBN '${tokens[0]}' is invalid!`, intent };
     }
-    return [null, { intent: UserIntent.AddNewBook, book: new Book(isbn) }];
+    return { intent, book: new Book(isbn), valid: true };
 }
 
-function parseBorrow(user: string, tokens: string[]): [Error, UserRequest] {
+function parseBorrow(user: string, tokens: string[]): UserRequest {
+    const intent = UserIntent.Borrow;
     const usageMsg = "Usage: borrow <ISBN>";
     if (tokens.length != 1) {
-        return [usageMsg, { intent: UserIntent.Borrow }];
+        return { valid: false, errorMsg: usageMsg, intent };
     }
 
     const isbn = parseISBN(tokens[0]);
     if (isbn === null) {
-        return [`ISBN '${tokens[0]}' is invalid!`, { intent: UserIntent.Borrow }];
+        return { valid: false, errorMsg: `ISBN '${tokens[0]}' is invalid!`, intent };
     }
-    return [null, { intent: UserIntent.Borrow, book: new Book(isbn), userId: user }];
+    return { intent, book: new Book(isbn), userId: user, valid: true };
 }
 
-function parseReturn(user: string, tokens: string[]): [Error, UserRequest] {
+function parseReturn(user: string, tokens: string[]): UserRequest {
+    const intent = UserIntent.Return;
     const usageMsg = "Usage: borrow <ISBN>";
     if (tokens.length != 1) {
-        return [usageMsg, { intent: UserIntent.Return }];
+        return { valid: false, errorMsg: usageMsg, intent };
     }
 
     const isbn = parseISBN(tokens[0]);
     if (isbn === null) {
-        return [`ISBN '${tokens[0]}' is invalid!`, { intent: UserIntent.Return }];
+        return { valid: false, errorMsg: `ISBN '${tokens[0]}' is invalid!`, intent };
     }
-    return [null, { intent: UserIntent.Return, book: new Book(isbn), userId: user }];
+    return { intent: UserIntent.Return, book: new Book(isbn), userId: user, valid: true };
 }
 
 /**
@@ -89,7 +87,7 @@ function parseReturn(user: string, tokens: string[]): [Error, UserRequest] {
  *   and 10 digits long if assigned before 2007.
  */
 function parseISBN(s: string): string | null {
-    const cleaned = s.replace(/-/g, "")
+    const cleaned = s.replace(/-/g, "");
     if (cleaned.length !== 10 && cleaned.length !== 13) {
         return null;
     }
