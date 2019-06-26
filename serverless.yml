@@ -49,6 +49,10 @@ provider:
 functions:
   hello:
     handler: index.handler
+    events:
+      - http:
+          path: /
+          method: POST
 
 plugins:
   - serverless-plugin-typescript
