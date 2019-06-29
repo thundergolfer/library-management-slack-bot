@@ -1,7 +1,7 @@
 import Quagga from 'quagga';
 import * as request from "request";
 
-export function decodeCodeFromUrl(url: string, size: number, downloadToken: string): Promise<string> {
+export function decodeCodeFromUrl(url: string, size: number, downloadToken: string): Promise<string | undefined> {
     return new Promise<string>((resolve, reject) => {
         request.get(url, {
             encoding: null,
@@ -30,7 +30,7 @@ export function decodeCodeFromUrl(url: string, size: number, downloadToken: stri
                     resolve(result.codeResult.code);
                 } else {
                     console.error(`Failed to decoded ISBN from url ${url}`);
-                    reject();
+                    resolve(undefined);
                 }
             })
 

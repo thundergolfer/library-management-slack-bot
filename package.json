@@ -54,6 +54,7 @@
   "dependencies": {
     "dotenv": "^8.0.0",
     "google-spreadsheet": "^2.0.7",
+    "node-isbn": "^1.4.0",
     "quagga": "^0.12.1",
     "request": "^2.88.0"
   }
