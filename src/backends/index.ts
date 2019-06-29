@@ -7,6 +7,7 @@ export interface IBackend {
     listBooks(): Promise<Book[]>
     getBook(isbn: string): Promise<Book | undefined>
     searchByTitle(title: string): Promise<Book[]>
+    searchByBorrower(user: string): Promise<Book[]>
 }
 
 export interface IBorrowResult {

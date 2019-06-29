@@ -100,6 +100,11 @@ export class GoogleSheetsBackend implements IBackend {
         return {success: true, message: "Returned!"};
     }
 
+    async searchByBorrower(user: string): Promise<Book[]> {
+        const allBooks = await this.listBooks();
+        return allBooks.filter(b => b.borrowers.includes(user));
+    }
+
     async searchByTitle(title: string): Promise<Book[]> {
         const maxEditDistanceToInclude = 3;
         const allBooks: Book[] = await this.listBooks();

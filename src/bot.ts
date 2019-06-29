@@ -6,16 +6,18 @@ import {SlackMessage} from "./slack_message";
 
 export enum UserIntent {
     Search,
-    ListBooks,
+    ListAll,
+    ListBorrowed,
     ISBN,
-    Unknown
+    Intro
 }
 
 export type UserRequest =
     | { intent: UserIntent.ISBN, isbn: string, valid: true }
-    | { intent: UserIntent.ListBooks, valid: true }
+    | { intent: UserIntent.ListAll, valid: true }
+    | { intent: UserIntent.ListBorrowed, valid: true }
     | { intent: UserIntent.Search, query: string, valid: true }
-    | { intent: UserIntent.Unknown, valid: true }
+    | { intent: UserIntent.Intro, valid: true }
     | { valid: false, errorMsg: string, intent: UserIntent }
 
 const USAGE_MSG = `Usage:
@@ -28,8 +30,13 @@ export async function parseMessage(text: string, files: any[] | undefined, user:
     const tokens = text.split(" ");
     const command = tokens[0];
 
+    if (!command && (!files || !files.length)) {
+        return { intent: UserIntent.Intro, valid: true }
+    }
+
     switch (command) {
-        case "list": return { intent: UserIntent.ListBooks, valid: true };
+        case "list": return { intent: UserIntent.ListAll, valid: true };
+        case "borrowed": return { intent: UserIntent.ListBorrowed, valid: true };
         case "search": return { intent: UserIntent.Search, query: text, valid: true };
         default: return parseIsbn(tokens, downloadToken, files);
     }
@@ -148,11 +155,62 @@ function getBookDescription(book: Book) {
 }
 
 export function presentBookList(books: Book[], user: string): SlackMessage {
+    if (!books.length) {
+        return { text: 'No books found.' }
+    }
+
     const blocks = [];
     for (const book of books) {
         blocks.push(...getBookBlocks(book, user));
     }
     return { blocks };
+}
+
+export function presentIntro() {
+    return {
+        blocks: [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": [
+                        'Welcome to the library, where you can add, borrow and return books. To get started, here are some commands:',
+                        '',
+                        '*@library <ISBN>* to add, borrow or return a book.',
+                        '*@library* with an scanned image of books barcode.',
+                        '*@library list* will list all books.',
+                        '*@library borrowed* to list books you have borrowed.',
+                        '*@library search <QUERY>* to search books.',
+                    ].join('\n'),
+                }
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "All Books",
+                            "emoji": true
+                        },
+                        "value": `all_books`,
+                    },
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "My Borrowed Books",
+                            "emoji": true
+                        },
+                        "value": `my_books`,
+                    }
+                ],
+            },
+            {
+                "type": "divider"
+            }
+        ]    }
 }
 
 export async function handleIsbn(isbn: string, user: string, backend: IBackend, isbnResolver: IsbnResolver): Promise<SlackMessage> {
