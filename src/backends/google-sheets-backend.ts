@@ -132,13 +132,13 @@ export class GoogleSheetsBackend implements IBackend {
         }
     }
 
-    private spreadsheetRowToBook(row: SpreadsheetRow): Book {
-        const record = row as unknown as BookSpreadsheetRow;
+    private spreadsheetRowToBook(_row: SpreadsheetRow): Book {
+        const row = _row as unknown as BookSpreadsheetRow;
         return new Book(
-            record['isbn'],
-            record['booktitle'],
-            record['numcopies'],
-            record['borrowers'].split(','),
+            row.isbn,
+            row.booktitle,
+            row.numcopies,
+            row.borrowers.split(',')
         )
     }
 
