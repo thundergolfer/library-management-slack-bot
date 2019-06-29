@@ -48,10 +48,11 @@
     "serverless-plugin-include-dependencies": "^3.2.1",
     "serverless-plugin-typescript": "^1.1.5",
     "ts-jest": "^24.0.0",
-    "typescript": "^3.2.2"
+    "typescript": "^3.5.2"
   },
   "dependencies": {
     "google-spreadsheet": "^2.0.7",
+    "quagga": "^0.12.1",
     "request": "^2.88.0"
   }
 }

@@ -54,11 +54,11 @@ function postToSlack(channel: string, text: string) {
     });
 }
 
-async function handleBotCommand(msgText: string, userID: string): Promise<string> {
+async function handleBotCommand(msgText: string, files: any[], userID: string, downloadToken: string): Promise<string> {
     // strip the <@USERID> app mention
     msgText = msgText.replace(/<@.*> /g, "");
 
-    const request = parseMessage(msgText, userID);
+    const request = await parseMessage(msgText, files, userID, downloadToken);
     if (!request.valid) {
         return request.errorMsg;
     }
@@ -91,7 +91,7 @@ async function handleBotCommand(msgText: string, userID: string): Promise<string
 
 // Post message to Slack - https://api.slack.com/methods/chat.postMessage
 async function processEvent(event: any, callback: Callback) {
-    const text = await handleBotCommand(event.text, event.user);
+    const text = await handleBotCommand(event.text, event.files, event.user, ACCESS_TOKEN);
     postToSlack(event.channel, text);
 
     callback(
@@ -101,7 +101,8 @@ async function processEvent(event: any, callback: Callback) {
 }
 
 // Lambda handler
-const handler: Handler = (event: any, context: Context, callback: Callback) => {
+export const handler: Handler = (event: any, context: Context, callback: Callback) => {
+    console.log(event.body);
     let body = JSON.parse(event.body)
     switch (body.type) {
         case "url_verification": verify(body, callback); break;
@@ -109,5 +110,3 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
         default: callback(null);
     }
 };
-
-export { handler };
