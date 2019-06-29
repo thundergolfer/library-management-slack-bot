@@ -5,6 +5,7 @@ export interface IBackend {
     borrowBook(isbn: string, borrower: string): Promise<IBorrowResult>
     returnBook(isbn: string, borrower: string): Promise<IReturnResult>
     listBooks(): Promise<Book[]>
+    getBook(isbn: string): Promise<Book | undefined>
     searchByTitle(title: string): Promise<Book[]>
 }
 
