@@ -31,6 +31,10 @@ users can search for available books, record their borrow, and record their retu
 
 `npm install`
 
+### Configuration
+
+Copy `.env.default` to `.env` and fill in the slack tokens and google sheet id.
+
 ### Testing 
 
 #### Unit

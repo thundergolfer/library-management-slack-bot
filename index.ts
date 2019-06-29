@@ -1,3 +1,7 @@
+import * as dotenv from 'dotenv';
+
+dotenv.config();
+
 import {Callback, Context, Handler} from 'aws-lambda';
 
 import {parseMessage, UserIntent, presentBookList} from "./src/bot";
@@ -6,8 +10,12 @@ import {createBackend} from "./src/backends/factory";
 import * as request from "request";
 
 const qs = require('querystring');
-const VERIFICATION_TOKEN = process.env.SLACK_VERIFICATION_TOKEN;
-const ACCESS_TOKEN = process.env.SLACK_ACCESS_TOKEN;
+const VERIFICATION_TOKEN = process.env.SLACK_VERIFICATION_TOKEN!;
+const ACCESS_TOKEN = process.env.SLACK_ACCESS_TOKEN!;
+
+if (!VERIFICATION_TOKEN || !ACCESS_TOKEN) {
+    throw new Error('Slack credentials missing.')
+}
 
 const makeApiGatewayCompatibleResponse = (payload: { challenge?: any; message?: string; }) => ({
     "statusCode": 200,
