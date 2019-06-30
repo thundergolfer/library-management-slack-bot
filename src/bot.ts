@@ -78,6 +78,7 @@ function parseISBN(s: string): string | undefined {
 }
 
 function getBookBlocks(book: Book, user: string): any {
+    const actions = getBookActions(book, user);
     return [
         {
             "type": "section",
@@ -91,14 +92,14 @@ function getBookBlocks(book: Book, user: string): any {
                 "alt_text": book.title || 'Cover'
             } : undefined,
         },
-        {
+        actions ? {
             "type": "actions",
-            "elements": getBookActions(book, user)
-        },
+            "elements": actions
+        } : undefined,
         {
             "type": "divider"
         }
-    ];
+    ].filter(Boolean);
 }
 
 function getBookActions(book: Book, user: string) {
