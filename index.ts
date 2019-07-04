@@ -58,9 +58,9 @@ async function handleBotCommand(msgText: string, userID: string): Promise<string
     // strip the <@USERID> app mention
     msgText = msgText.replace(/<@.*> /g, "");
 
-    const [err, request] = parseMessage(msgText, userID);
-    if (err !== null) {
-        return err;
+    const request = parseMessage(msgText, userID);
+    if (!request.valid) {
+        return request.errorMsg;
     }
 
     try {
@@ -68,12 +68,12 @@ async function handleBotCommand(msgText: string, userID: string): Promise<string
         switch (request.intent) {
             case UserIntent.Borrow: {
                 console.log("handling a borrow.");
-                const result = await backend.borrowBook(request.book!.ISBN, userID);
+                const result = await backend.borrowBook(request.book.ISBN, userID);
                 return result.message;
             }
             case UserIntent.Return: {
                 console.log("handling a return.");
-                const result = await backend.returnBook(request.book!.ISBN, userID);
+                const result = await backend.returnBook(request.book.ISBN, userID);
                 return result.message;
             }
             case UserIntent.ListBooks: {
