@@ -1,4 +1,5 @@
 import { Book } from './book';
+import {decodeCodeFromUrl} from "./bar_code_reader";
 
 export enum UserIntent {
     AddNewBook,
@@ -24,59 +25,72 @@ const HELP_MSG = `Usage:
     return <ISBN>
 `;
 
-export function parseMessage(text: string, user: string): UserRequest {
+export async function parseMessage(text: string, files: any[] | undefined, user: string, downloadToken: string): Promise<UserRequest> {
     const tokens = text.split(" ");
     const command = tokens[0];
 
     switch (command) {
-        case "add": return parseAdd(tokens.slice(1,));
-        case "borrow": return parseBorrow(user, tokens.slice(1,));
-        case "return": return parseReturn(user, tokens.slice(1,));
+        case "add": return parseAdd(tokens.slice(1,), downloadToken, files);
+        case "borrow": return parseBorrow(user, tokens.slice(1,), downloadToken, files);
+        case "return": return parseReturn(user, tokens.slice(1,), downloadToken, files);
         case "list": return { intent: UserIntent.ListBooks, valid: true };
         default: return { valid: false, errorMsg: HELP_MSG, intent: UserIntent.Unknown }
     }
 }
 
-function parseAdd(tokens: string[]): UserRequest {
+async function parseAdd(tokens: string[], downloadToken: string, files?: any[]): Promise<UserRequest> {
     const intent = UserIntent.AddNewBook;
     const usageMsg = "Usage: add <ISBN>";
-    if (tokens.length != 1) {
-        return { valid: false, errorMsg: usageMsg, intent }
+    const isbnToken = await getISBN(tokens, downloadToken, files);
+    if (!isbnToken) {
+        return { valid: false, errorMsg: usageMsg, intent };
     }
 
-    const isbn = parseISBN(tokens[0]);
-    if (isbn === null) {
+    const isbn = parseISBN(isbnToken);
+    if (isbn == null) {
         return { valid: false, errorMsg: `ISBN '${tokens[0]}' is invalid!`, intent };
     }
     return { intent, book: new Book(isbn), valid: true };
 }
 
-function parseBorrow(user: string, tokens: string[]): UserRequest {
+async function parseBorrow(user: string, tokens: string[], downloadToken: string, files?: any[]): Promise<UserRequest> {
     const intent = UserIntent.Borrow;
     const usageMsg = "Usage: borrow <ISBN>";
-    if (tokens.length != 1) {
+    const isbnToken = await getISBN(tokens, downloadToken, files);
+    if (!isbnToken) {
         return { valid: false, errorMsg: usageMsg, intent };
     }
 
-    const isbn = parseISBN(tokens[0]);
-    if (isbn === null) {
+    const isbn = parseISBN(isbnToken);
+    if (isbn == null) {
         return { valid: false, errorMsg: `ISBN '${tokens[0]}' is invalid!`, intent };
     }
     return { intent, book: new Book(isbn), userId: user, valid: true };
 }
 
-function parseReturn(user: string, tokens: string[]): UserRequest {
+async function parseReturn(user: string, tokens: string[], downloadToken: string, files?: any[]): Promise<UserRequest> {
     const intent = UserIntent.Return;
     const usageMsg = "Usage: borrow <ISBN>";
-    if (tokens.length != 1) {
+    const isbnToken = await getISBN(tokens, downloadToken, files);
+    if (!isbnToken) {
         return { valid: false, errorMsg: usageMsg, intent };
     }
 
-    const isbn = parseISBN(tokens[0]);
-    if (isbn === null) {
+    const isbn = parseISBN(isbnToken);
+    if (isbn == null) {
         return { valid: false, errorMsg: `ISBN '${tokens[0]}' is invalid!`, intent };
     }
     return { intent: UserIntent.Return, book: new Book(isbn), userId: user, valid: true };
+}
+
+async function getISBN(tokens: string[], downloadToken: string, files?: any[]): Promise<string | undefined> {
+    if (tokens[0]) {
+        return tokens[0];
+    }
+
+    if (files && files.length && files[0].thumb_720) {
+        return await decodeCodeFromUrl(files[0].thumb_720, files[0].thumb_720_w, downloadToken);
+    }
 }
 
 /**
@@ -86,12 +100,11 @@ function parseReturn(user: string, tokens: string[]): UserRequest {
  *   The ISBN is 13 digits long if assigned on or after 1 January 2007,
  *   and 10 digits long if assigned before 2007.
  */
-function parseISBN(s: string): string | null {
+function parseISBN(s: string): string | undefined {
     const cleaned = s.replace(/-/g, "");
-    if (cleaned.length !== 10 && cleaned.length !== 13) {
-        return null;
+    if (cleaned.length === 10 || cleaned.length === 13) {
+        return cleaned;
     }
-    return cleaned;
 }
 
 function presentBook(book: Book): string {

@@ -55,7 +55,7 @@ It won't actually send a message to Slack. It will just `console.log` what would
 
 #### Generating Mock Event Payloads 
 
-From repository root, run `jsonnet -m test/data test/data/jsonnet/api_gateway_base.jsonnet`. Valid AWS API Gateway payloads
+From repository root, run `jsonnet -m tests/data tests/data/jsonnet/api_gateway_base.jsonnet`. Valid AWS API Gateway payloads
 *containing* Slack Event API payloads as strings (`event.body`) will be generated in `test/data`.
 
 ## Running Locally
