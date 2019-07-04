@@ -4,7 +4,7 @@ dotenv.config();
 
 import {Callback, Context, Handler} from 'aws-lambda';
 
-import {parseMessage, UserIntent, presentBookList, handleIsbn} from "./src/bot";
+import {handleIsbn, parseMessage, presentBookList, presentIntro, UserIntent} from "./src/bot";
 import {IBackend} from "./src/backends";
 import {createBackend} from "./src/backends/factory";
 import * as request from "request";
@@ -70,7 +70,7 @@ const isbnResolver = new IsbnResolver();
 
 async function handleBotCommand(msgText: string, files: any[], userID: string, downloadToken: string): Promise<SlackMessage> {
     // strip the <@USERID> app mention
-    msgText = msgText.replace(/<@.*> /g, "");
+    msgText = msgText.replace(/^<@.*> ?/, "");
 
     const request = await parseMessage(msgText, files, userID, downloadToken);
     if (!request.valid) {
@@ -79,14 +79,20 @@ async function handleBotCommand(msgText: string, files: any[], userID: string, d
 
     backend = backend || await createBackend("google-sheets");
     switch (request.intent) {
+        case UserIntent.Intro: {
+            return presentIntro();
+        }
         case UserIntent.ISBN: {
             console.log(`handling isbn ${request.isbn}`);
             return handleIsbn(request.isbn, userID, backend, isbnResolver);
         }
-        case UserIntent.ListBooks: {
+        case UserIntent.ListAll: {
             console.log("handling a request to list all books in DB");
-            const books = await backend.listBooks();
-            return presentBookList(books, userID);
+            return presentBookList(await backend.listBooks(), userID);
+        }
+        case UserIntent.ListBorrowed: {
+            console.log("handling a request to list borrowed books in DB");
+            return presentBookList(await backend.searchByBorrower(userID), userID);
         }
         default:
             return { text: "Could not parse your request, sorry." };
@@ -109,7 +115,7 @@ async function processActions(user: { id: string }, channel: string, responseUrl
 
     for (const _action of actions) {
         const [action, isbn] = _action.value.split(':');
-        let text;
+        let message: SlackMessage;
 
         switch (action) {
             case "add":
@@ -121,19 +127,25 @@ async function processActions(user: { id: string }, channel: string, responseUrl
                     ...book,
                     numCopies: 1,
                 });
-                text = `${book.title} added.`;
+                message = { text: `${book.title} added.` };
                 break;
             case "return":
-                text = (await backend.returnBook(isbn, user.id)).message;
+                message = { text: (await backend.returnBook(isbn, user.id)).message };
                 break;
             case "borrow":
-                text = (await backend.borrowBook(isbn, user.id)).message;
+                message = { text: (await backend.borrowBook(isbn, user.id)).message };
+                break;
+            case "all_books":
+                message = presentBookList(await backend.listBooks(), user.id);
+                break;
+            case "my_books":
+                message = presentBookList(await backend.searchByBorrower(user.id), user.id);
                 break;
             default:
                 throw new Error(`Unknown action ${action}`)
         }
 
-        postToSlack(channel, user.id, { text, response_type: 'ephemeral' }, responseUrl);
+        postToSlack(channel, user.id, { ...message, response_type: 'ephemeral' }, responseUrl);
     }
 }
 
