@@ -12,6 +12,8 @@ const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_ID || DEFAULT_SPREADSHEET_ID;
 interface BookSpreadsheetRow {
     isbn: string,
     booktitle: string,
+    authors: string,
+    thumbnail: string,
     numcopies: number,
     borrowers: string,
 }
@@ -125,8 +127,10 @@ export class GoogleSheetsBackend implements IBackend {
 
     private bookToSpreadsheetRow(b: Book): BookSpreadsheetRow {
         return {
-            isbn: b.ISBN,
+            isbn: b.isbn,
             booktitle: b.title || "",
+            authors: b.authors.join(','),
+            thumbnail: b.thumbnail || "",
             numcopies: b.numCopies,
             borrowers: b.borrowers.join(','),
         }
@@ -136,10 +140,11 @@ export class GoogleSheetsBackend implements IBackend {
         const row = _row as unknown as BookSpreadsheetRow;
         return new Book(
             row.isbn,
-            row.booktitle,
+            row.booktitle || undefined,
+            row.authors ? row.authors.split(',') : [],
+            row.thumbnail || undefined,
             row.numcopies,
-            row.borrowers.split(',')
+            row.borrowers ? row.borrowers.split(',') : []
         )
     }
-
 }

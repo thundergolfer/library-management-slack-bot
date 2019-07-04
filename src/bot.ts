@@ -1,28 +1,27 @@
 import { Book } from './book';
 import {decodeCodeFromUrl} from "./bar_code_reader";
+import {IBackend} from "./backends";
+import {IsbnResolver} from "./isbn_resolver";
+import {SlackMessage} from "./slack_message";
 
 export enum UserIntent {
-    AddNewBook,
-    Borrow,
-    Return,
     Search,
     ListBooks,
+    ISBN,
     Unknown
 }
 
 export type UserRequest =
-    { intent: UserIntent.AddNewBook, book: Book, valid: true }
-    | { intent: UserIntent.Borrow, book: Book, userId: string, valid: true }
-    | { intent: UserIntent.Return, book: Book, valid: true }
-    | { intent: UserIntent.Search, searchString: string, valid: true }
+    | { intent: UserIntent.ISBN, isbn: string, valid: true }
     | { intent: UserIntent.ListBooks, valid: true }
+    | { intent: UserIntent.Search, query: string, valid: true }
     | { intent: UserIntent.Unknown, valid: true }
     | { valid: false, errorMsg: string, intent: UserIntent }
 
-const HELP_MSG = `Usage:
-    add <ISBN>
-    borrow <ISBN>
-    return <ISBN>
+const USAGE_MSG = `Usage:
+    <ISBN>
+    list
+    search <query>
 `;
 
 export async function parseMessage(text: string, files: any[] | undefined, user: string, downloadToken: string): Promise<UserRequest> {
@@ -30,67 +29,31 @@ export async function parseMessage(text: string, files: any[] | undefined, user:
     const command = tokens[0];
 
     switch (command) {
-        case "add": return parseAdd(tokens.slice(1,), downloadToken, files);
-        case "borrow": return parseBorrow(user, tokens.slice(1,), downloadToken, files);
-        case "return": return parseReturn(user, tokens.slice(1,), downloadToken, files);
         case "list": return { intent: UserIntent.ListBooks, valid: true };
-        default: return { valid: false, errorMsg: HELP_MSG, intent: UserIntent.Unknown }
+        case "search": return { intent: UserIntent.Search, query: text, valid: true };
+        default: return parseIsbn(tokens, downloadToken, files);
     }
 }
 
-async function parseAdd(tokens: string[], downloadToken: string, files?: any[]): Promise<UserRequest> {
-    const intent = UserIntent.AddNewBook;
-    const usageMsg = "Usage: add <ISBN>";
-    const isbnToken = await getISBN(tokens, downloadToken, files);
-    if (!isbnToken) {
-        return { valid: false, errorMsg: usageMsg, intent };
-    }
-
-    const isbn = parseISBN(isbnToken);
-    if (isbn == null) {
-        return { valid: false, errorMsg: `ISBN '${tokens[0]}' is invalid!`, intent };
-    }
-    return { intent, book: new Book(isbn), valid: true };
-}
-
-async function parseBorrow(user: string, tokens: string[], downloadToken: string, files?: any[]): Promise<UserRequest> {
-    const intent = UserIntent.Borrow;
-    const usageMsg = "Usage: borrow <ISBN>";
-    const isbnToken = await getISBN(tokens, downloadToken, files);
-    if (!isbnToken) {
-        return { valid: false, errorMsg: usageMsg, intent };
-    }
-
-    const isbn = parseISBN(isbnToken);
-    if (isbn == null) {
-        return { valid: false, errorMsg: `ISBN '${tokens[0]}' is invalid!`, intent };
-    }
-    return { intent, book: new Book(isbn), userId: user, valid: true };
-}
-
-async function parseReturn(user: string, tokens: string[], downloadToken: string, files?: any[]): Promise<UserRequest> {
-    const intent = UserIntent.Return;
-    const usageMsg = "Usage: borrow <ISBN>";
-    const isbnToken = await getISBN(tokens, downloadToken, files);
-    if (!isbnToken) {
-        return { valid: false, errorMsg: usageMsg, intent };
-    }
-
-    const isbn = parseISBN(isbnToken);
-    if (isbn == null) {
-        return { valid: false, errorMsg: `ISBN '${tokens[0]}' is invalid!`, intent };
-    }
-    return { intent: UserIntent.Return, book: new Book(isbn), userId: user, valid: true };
-}
-
-async function getISBN(tokens: string[], downloadToken: string, files?: any[]): Promise<string | undefined> {
-    if (tokens[0]) {
-        return tokens[0];
-    }
-
+async function parseIsbn(tokens: string[], downloadToken: string, files?: any[]): Promise<UserRequest> {
+    const intent = UserIntent.ISBN;
+    let isbn: string | undefined;
     if (files && files.length && files[0].thumb_720) {
-        return await decodeCodeFromUrl(files[0].thumb_720, files[0].thumb_720_w, downloadToken);
+        isbn = await decodeCodeFromUrl(files[0].thumb_720, files[0].thumb_720_w, downloadToken);
+        isbn = isbn && parseISBN(isbn);
+        if (!isbn) {
+            return { intent, valid: false, errorMsg: 'Could not find an ISBN in your image.' };
+        }
+    } else if (tokens.length) {
+        isbn = parseISBN(tokens[0]);
+        if (!isbn) {
+            return { intent, valid: false, errorMsg: 'Not a valid command or ISBN.' };
+        }
+    } else {
+        return { intent, valid: false, errorMsg: USAGE_MSG };
     }
+
+    return { intent, isbn, valid: true };
 }
 
 /**
@@ -107,18 +70,95 @@ function parseISBN(s: string): string | undefined {
     }
 }
 
-function presentBook(book: Book): string {
-    return `_${book.title}_ - \`${book.ISBN}\``;
+function getBookBlocks(book: Book, user: string): any {
+    return [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": getBookDescription(book),
+            },
+            "accessory": book.thumbnail ? {
+                "type": "image",
+                "image_url": book.thumbnail,
+                "alt_text": book.title || 'Cover'
+            } : undefined,
+        },
+        {
+            "type": "actions",
+            "elements": getBookActions(book, user)
+        },
+        {
+            "type": "divider"
+        }
+    ];
 }
 
-export function presentBookList(books: Book[]): string {
-    if (books.length == 0) {
-        return "";
-    } else if (books.length == 1) {
-        return presentBook(books[0]);
+function getBookActions(book: Book, user: string) {
+    if (book.numCopies === 0) {
+        return [
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Add to library",
+                    "emoji": true
+                },
+                "value": `add:${book.isbn}`,
+            }
+        ];
+    } else if (book.borrowers.includes(user)) {
+        return [
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Return to library",
+                    "emoji": true
+                },
+                "value": `return:${book.isbn}`,
+            }
+        ];
+    } else if (book.numCopies > book.borrowers.length) {
+        return [
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Borrow",
+                    "emoji": true
+                },
+                "value": `borrow:${book.isbn}`,
+            }
+        ];
     }
+}
 
-    const presentedBooks: string[] = books.map((book: Book) => presentBook(book));
-    const listedBooks: string[] = presentedBooks.map((pb: string) => `• ${pb}`);
-    return listedBooks.join('\n');
+function getBookDescription(book: Book) {
+    const status = book.numCopies ? [
+        `Copies remaining: ${book.numCopies - book.borrowers.length}, total copies: ${book.numCopies}`,
+        book.borrowers.length ? `borrowed by ${book.borrowers.map(b => `<@${b}>`).join(' ')}` : undefined
+    ].filter(Boolean).join('\n') : 'No copies in the library';
+
+    return [
+        `*${book.title || '<Untitled>'}*,`,
+        book.authors.length ? `by ${book.authors.join(',')}` : undefined,
+        status,
+    ].filter(Boolean).join('\n');
+}
+
+export function presentBookList(books: Book[], user: string): SlackMessage {
+    const blocks = [];
+    for (const book of books) {
+        blocks.push(...getBookBlocks(book, user));
+    }
+    return { blocks };
+}
+
+export async function handleIsbn(isbn: string, user: string, backend: IBackend, isbnResolver: IsbnResolver): Promise<SlackMessage> {
+    let book = await backend.getBook(isbn);
+    book = book || await isbnResolver.resolve(isbn);
+    return book
+        ? {blocks: getBookBlocks(book, user)}
+        : {text: 'Could not find any book with that ISBN in the library or Google.'};
 }
