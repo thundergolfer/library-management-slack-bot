@@ -1,8 +1,9 @@
 import {IBackend, IBorrowResult, IReturnResult} from './index';
-import { Book } from '../book';
-import { getEditDistance } from "../search";
+import {Book} from '../book';
+import {getEditDistance} from "../search";
+import {promisify} from 'util'
 
-import GoogleSpreadsheet, {SpreadsheetRow} from 'google-spreadsheet';
+import GoogleSpreadsheet, {GetRows, SpreadsheetRow} from 'google-spreadsheet';
 import CREDS from '../../client_secret.json';
 
 const DEFAULT_SPREADSHEET_ID = process.env.IS_LOCAL ? "1Vbvys2uiSyJWPKsFWjMyHeZ-1mTWDTZCyeFfYCkemuQ" : "1qzxwmhX7cLuRKUN8BH6FuvF85n6gosfAU2D6K3qh2yA";
@@ -12,141 +13,89 @@ interface BookSpreadsheetRow {
     isbn: string,
     booktitle: string,
     numcopies: number,
-    borrowers: string
+    borrowers: string,
 }
 
 export class GoogleSheetsBackend implements IBackend {
-    private _dbWorksheetIndex = 1;
+    constructor(
+        private readonly doc: GoogleSpreadsheet,
+        private readonly addRow: (worksheet_id: number, new_row: any) => Promise<SpreadsheetRow>,
+        private readonly getRows: (sheetIndex: number, opts: GetRows) => Promise<SpreadsheetRow[]>,
+        private readonly dbWorksheetIndex = 1,
+    ) {
+    }
 
-    constructor(private _doc: GoogleSpreadsheet) {}
-
-    static create(): Promise<GoogleSheetsBackend> {
+    static async create(): Promise<GoogleSheetsBackend> {
         // Create a document object using the ID of the spreadsheet - obtained from its URL.
         const doc = new GoogleSpreadsheet(SPREADSHEET_ID);
+        await promisify(doc.useServiceAccountAuth)(CREDS);
 
-        return new Promise<GoogleSheetsBackend>((resolve, reject) => {
-            // Authenticate with the Google Spreadsheets API.
-            doc.useServiceAccountAuth(CREDS, function (err: Error) {
-                if (err) {
-                    console.log(err);
-                    reject(err);
-                }
-                const gsBackend = new GoogleSheetsBackend(doc);
-                resolve(gsBackend);
-            });
-        });
+        return new GoogleSheetsBackend(
+            doc,
+            promisify(doc.addRow),
+            promisify((index: number, opts: GetRows, c: (err: Error, rows: SpreadsheetRow[]) => void) => doc.getRows(index, opts, c))
+        );
     }
 
-    addBook(book: Book): Promise<Book> {
-        return new Promise<Book>((resolve, reject) => {
-            // TODO(Jonathon): Validate that the book has not already been added
-            this._doc.addRow(
-                this._dbWorksheetIndex,
-                this.bookToSpreadsheetRow(book),
-                (err: Error, row: SpreadsheetRow) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(this.spreadsheetRowToBook(<BookSpreadsheetRow><unknown>row));
-                    }
-                }
-            )
-        });
+    async getBook(isbn: string): Promise<Book | undefined> {
+        const rows = await this.getRows(this.dbWorksheetIndex, {query: `isbn==${isbn}`});
+        return rows.length > 0 ? this.spreadsheetRowToBook(rows[0]) : undefined;
     }
 
-    listBooks(): Promise<Book[]> {
-        const requestOpts = {};
-        return new Promise<Book[]>((resolve, reject) => {
-            this._doc.getRows(
-                this._dbWorksheetIndex,
-                requestOpts,
-                (err: Error, rows: SpreadsheetRow[]) => {
-                    if (err) {
-                        reject(err)
-                    } else {
-                        resolve(rows.map((r) =>
-                            this.spreadsheetRowToBook(<BookSpreadsheetRow><unknown>r))
-                        );
-                    }
-                }
-            )
-        });
+    async addBook(book: Book): Promise<Book> {
+        const row = await this.addRow(this.dbWorksheetIndex, this.bookToSpreadsheetRow(book));
+        // TODO(Jonathon): Validate that the book has not already been added
+        return this.spreadsheetRowToBook(row);
+    }
+
+    async listBooks(): Promise<Book[]> {
+        const rows = await this.getRows(this.dbWorksheetIndex, {});
+        return rows.map(r => this.spreadsheetRowToBook(r));
     }
 
     async borrowBook(isbn: string, borrower: string): Promise<IBorrowResult> {
-        const requestOpts = {
-            query: `isbn==${isbn}`
-        };
-        return new Promise<IBorrowResult>((resolve, reject) => {
-            this._doc.getRows(
-                this._dbWorksheetIndex,
-                requestOpts,
-                (err: Error, rows: SpreadsheetRow[]) => {
-                    if (err) {
-                        return reject(err);
-                    } else if (rows === undefined || rows.length == 0) {
-                        return resolve({
-                            success: false,
-                            message: "Book not found in database. Trying adding book first."
-                        })
-                    }
+        const rows = await this.getRows(this.dbWorksheetIndex, {query: `isbn==${isbn}`});
 
-                    // TODO(Jonathon): Validate that the user has not already borrowed this book
-                    let row = <BookSpreadsheetRow & SpreadsheetRow><unknown>rows[0];
-                    let borrowers = row.borrowers === "" ? [] : row.borrowers.split(',');
-                    row.borrowers = borrowers.concat([borrower]).join(",");
+        if (rows.length == 0) {
+            return {
+                success: false,
+                message: "Book not found in database. Trying adding book first."
+            };
+        }
 
-                    row.save((err) => {
-                        if (err) {
-                            resolve({ success: false, message: err.message });
-                        } else {
-                            resolve({ success: true, message: "Borrowed!" });
-                        }
-                    });
-                }
-            )
-        });
+        // TODO(Jonathon): Validate that the user has not already borrowed this book
+        let row = rows[0] as unknown as BookSpreadsheetRow & SpreadsheetRow;
+        let borrowers = row.borrowers === "" ? [] : row.borrowers.split(',');
+        row.borrowers = borrowers.concat([borrower]).join(",");
+
+        await promisify(row.save)();
+
+        return {success: true, message: "Borrowed!"};
     }
 
     async returnBook(isbn: string, borrower: string): Promise<IReturnResult> {
-        const requestOpts = {
-            query: `isbn==${isbn}`
-        };
-        return new Promise<IBorrowResult>((resolve, reject) => {
-            this._doc.getRows(
-                this._dbWorksheetIndex,
-                requestOpts,
-                (err: Error, rows: SpreadsheetRow[]) => {
-                    if (err) {
-                        return reject(err);
-                    } else if (rows === undefined || rows.length == 0) {
-                        return resolve({
-                            success: false,
-                            message: "Book not found in database. Trying adding book first."
-                        })
-                    }
+        const rows = await this.getRows(this.dbWorksheetIndex, {query: `isbn==${isbn}`});
 
-                    let row = <BookSpreadsheetRow & SpreadsheetRow><unknown>rows[0];
-                    let borrowers = row.borrowers === "" ? [] : row.borrowers.split(',');
-                    const borrowerIndex = borrowers.indexOf(borrower);
-                    if (borrowerIndex < 0) {
-                        resolve({ success: false, message: `'${borrower}' has not borrowed this book.` });
-                        return;
-                    }
+        if (rows.length == 0) {
+            return {
+                success: false,
+                message: "Book not found in database. Trying adding book first."
+            };
+        }
 
-                    borrowers.splice(borrowerIndex, 1);
-                    row.borrowers = borrowers.join(",");
+        let row = rows[0] as unknown as BookSpreadsheetRow & SpreadsheetRow;
+        let borrowers = row.borrowers === "" ? [] : row.borrowers.split(',');
+        const borrowerIndex = borrowers.indexOf(borrower);
+        if (borrowerIndex < 0) {
+            return {success: false, message: `'${borrower}' has not borrowed this book.`};
+        }
 
-                    row.save((err) => {
-                        if (err) {
-                            resolve({ success: false, message: err.message });
-                        } else {
-                            resolve({ success: true, message: "Returned!" });
-                        }
-                    });
-                }
-            )
-        });
+        borrowers.splice(borrowerIndex, 1);
+        row.borrowers = borrowers.join(",");
+
+        await promisify(row.save)();
+
+        return {success: true, message: "Returned!"};
     }
 
     async searchByTitle(title: string): Promise<Book[]> {
@@ -179,11 +128,12 @@ export class GoogleSheetsBackend implements IBackend {
             isbn: b.ISBN,
             booktitle: b.title || "",
             numcopies: b.numCopies,
-            borrowers: b.borrowers.join(',')
+            borrowers: b.borrowers.join(','),
         }
     }
 
-    private spreadsheetRowToBook(row: BookSpreadsheetRow): Book {
+    private spreadsheetRowToBook(_row: SpreadsheetRow): Book {
+        const row = _row as unknown as BookSpreadsheetRow;
         return new Book(
             row.isbn,
             row.booktitle,
