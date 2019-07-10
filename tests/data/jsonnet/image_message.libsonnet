@@ -2,12 +2,12 @@ local slack_events_api = import 'slack_events_api_base.libsonnet';
 
 slack_events_api.template({
   "type": "app_mention",
-  "text": "<@U0LAN0Z89> borrow",
+  "text": "<@U0LAN0Z89>",
   "files": [
      {
-       "thumb_720": "https://selfpublishingadvice.org/wp-content/uploads/2017/07/sample-barcode.jpg",
-       "thumb_720_w": 375,
-       "thumb_720_h": 203,
+       "thumb_1024": "https://files.slack.com/files-tmb/THFTUEQBW-FKR5NPZ8S-0ececd7330/image_from_ios-1_1024.jpg",
+       "thumb_1024_w": 768,
+       "thumb_1024_h": 1024
      }
    ],
   "upload": true,

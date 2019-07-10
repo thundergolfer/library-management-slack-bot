@@ -25,7 +25,7 @@ export function decodeCodeFromUrl(url: string, size: number, downloadToken: stri
                     patchSize: 'large'
                 },
             }, result => {
-                if (result.codeResult) {
+                if (result && result.codeResult) {
                     console.log(`Decoded ISBN ${result.codeResult.code} from url ${url}`);
                     resolve(result.codeResult.code);
                 } else {
