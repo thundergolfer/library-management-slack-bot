@@ -1,4 +1,4 @@
-# Library Management Slack Bot
+# Library Management Slack Bot [![Build Status](https://travis-ci.com/thundergolfer/library-management-slack-bot.svg?branch=master)](https://travis-ci.com/thundergolfer/library-management-slack-bot)
 
 Slack bot that helps facilitate tracking of books and borrowers in your office/home library. This bot was built to support the office library @ [Canva Sydney](https://www.canva.com/careers/), but is general in nature and with simple hosting on [AWS Lambda](https://aws.amazon.com/lambda/) and [Google Sheets](https://www.twilio.com/blog/2017/03/google-spreadsheets-and-javascriptnode-js.html) can solve the same problems in your office. 
 
