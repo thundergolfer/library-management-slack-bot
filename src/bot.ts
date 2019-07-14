@@ -45,11 +45,11 @@ export async function parseMessage(text: string, files: any[] | undefined, user:
 async function parseIsbn(tokens: string[], downloadToken: string, files?: any[]): Promise<UserRequest> {
     const intent = UserIntent.ISBN;
     let isbn: string | undefined;
-    if (files && files.length && files[0].thumb_720) {
-        isbn = await decodeCodeFromUrl(files[0].thumb_720, files[0].thumb_720_w, downloadToken);
+    if (files && files.length && files[0].thumb_1024) {
+        isbn = await decodeCodeFromUrl(files[0].thumb_1024, files[0].thumb_1024_w, downloadToken);
         isbn = isbn && parseISBN(isbn);
         if (!isbn) {
-            return { intent, valid: false, errorMsg: 'Could not find an ISBN in your image.' };
+            return { intent, valid: false, errorMsg: 'Could not find a barcode in your image.' };
         }
     } else if (tokens.length) {
         isbn = parseISBN(tokens[0]);
@@ -219,5 +219,5 @@ export async function handleIsbn(isbn: string, user: string, backend: IBackend, 
     book = book || await isbnResolver.resolve(isbn);
     return book
         ? {blocks: getBookBlocks(book, user)}
-        : {text: 'Could not find any book with that ISBN in the library or Google.'};
+        : {text: `Could not find any book with the ISBN ${isbn} in the library or Google.`};
 }
