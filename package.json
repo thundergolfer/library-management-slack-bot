@@ -16,6 +16,13 @@
     "bot"
   ],
   "author": "Jonathon Belotti",
+  "contributors": [
+    {
+      "name": "Toby Rahilly",
+      "email": "toby.rahilly@gmail.com",
+      "url": "https://github.com/WearyMonkey"
+    }
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/thundergolfer/library-management-slack-bot/issues"
